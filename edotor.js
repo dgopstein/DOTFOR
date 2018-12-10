@@ -1,4 +1,10 @@
-var white, black, green, yellow, blue, red;
+const [white, black, green, yellow, blue, red] =
+      [d3.rgb(255, 255, 255),
+       d3.rgb(0, 0, 0),
+       d3.rgb(185, 217, 45),
+       d3.rgb(242, 213, 84),
+       d3.rgb( 45, 192, 230),
+       d3.rgb(227,  38, 38)];
 
 const n_cols = 6
 const n_rows = 12
@@ -10,123 +16,90 @@ const buttons =
                                       col: col,
                                       eaten: false})));
 
+const buttonSize = 15;
 const buttonMargin = 50;
 
-const rowY = row_idx => (row_idx+1)*buttonMargin;
 
-function buttonCard (p) {
-  p.setup = () => {
-    p.frameRate(10)
-    p.createCanvas(400, 720);
+const buttonColor = button => {
 
-    [white, black, green, yellow, blue, red] =
-      [p.color(255, 255, 255),
-       p.color(0, 0, 0),
-       p.color(185, 217, 45),
-       p.color(242, 213, 84),
-       p.color( 45, 192, 230),
-       p.color(227,  38, 38)];
-  }
+  const colors = [green, yellow, blue, red];
 
-  p.buttons = buttons
-
-  const buttonColor = button => {
-
-    const colors = [green, yellow, blue, red];
-
-    return colors[_.floor(button.row/3)];
-  }
-
-  const buttonSize = 30;
-
-  function drawDot(x, y, clr) {
-    p.fill(clr)
-    p.strokeWeight(1)
-    p.stroke(clr)
-    p.ellipse(x, y, buttonSize, buttonSize)
-  }
-
-  const drawBlankDot = (x, y) => {
-    p.fill(white)
-    p.stroke(white)
-    p.ellipse(x, y, buttonSize+1, buttonSize+1)
-  }
-
-  const buttonX = b => (b.col+1)*buttonMargin
-  const buttonY = b => rowY(b.row+1)
-
-
-  const drawButtons = () => {
-    buttons.forEach(b => {
-      if (b.eaten) {
-        drawBlankDot(buttonX(b), buttonY(b))
-      } else {
-        drawDot(buttonX(b), buttonY(b), buttonColor(b))
-      }});
-  }
-
-  const drawCard = () => {
-    const min = _.minBy(buttons, b => b.row + b.col)
-    const max = _.maxBy(buttons, b => b.row + b.col)
-
-    p.stroke(black)
-    p.strokeWeight(3)
-    p.fill(white)
-    p.rect(buttonX(min) - buttonMargin, buttonY(min) - buttonMargin,
-           (n_cols+1)*buttonMargin, (n_rows+1)*buttonMargin)
-
-    drawButtons()
-  }
-
-  p.draw = () => {
-    drawCard()
-  }
-
-  const buttonCollider = b => (m_x, m_y) =>
-        p.dist(m_x, m_y, buttonX(b), buttonY(b)) < (buttonSize/2)
-
-  p.mousePressed = () => {
-    const clickedButton = _.find(buttons, b => buttonCollider(b)(p.mouseX, p.mouseY))
-
-    if (clickedButton) {
-      clickedButton.eaten = true;
-    }
-  }
+  return colors[_.floor(button.row/3)];
 }
 
-var buttonCard_p5 = new p5(buttonCard, 'button-card');
-
+const rowY = row_idx => (row_idx+1)*buttonMargin;
+const buttonX = b => (b.col+1)*buttonMargin
+const buttonY = b => rowY(b.row)
 
 //////////////////////////////////////////////////////////////
 //                         BCD Card
 //////////////////////////////////////////////////////////////
 
-function bcdCard (p) {
-  const buttons = buttonCard_p5.buttons
+const buttonRows = () =>
+      _.map(_.groupBy(buttons, b => b.row), (v, k) => v)
+      .map(row => _.sortBy(row, b => b.col))
 
-  const buttonRows = () =>
-        _.map(_.groupBy(buttons, b => b.row), (v, k) => v)
-         .map(row => _.sortBy(row, b => b.col))
+const buttonToInt = b => (b.eaten ? 0 : 1) * (n_cols - b.col)
+const buttonRowToInt = buttonRow => _.sum(buttonRow.map(buttonToInt))
 
-  const buttonToInt = b => (b.eaten ? 0 : 1) * (n_cols - b.row)
-  const buttonRowToInt = buttonRow => _.sum(buttonRow.map(buttonToInt))
+const buttonCard = d3.select("#button-card")
+            .append("svg")
+            .attr("width", 350)
+            .attr("height", 651);
 
-  p.setup = () => {
-    p.frameRate(10)
-    p.createCanvas(400, 700);
-  }
+const bcdCard = d3.select("#bcd-card")
+            .append("svg")
+            .attr("width", 100)
+            .attr("height", 651);
 
-  p.draw = () => {
-    p.fill(black)
-    p.textSize(32);
-    buttonRows().forEach((row, i) => p.text(buttonRowToInt(row).toString(), 0, rowY(i)))
-  }
+function buttonCardUpdate() {
+  const dots = buttonCard.selectAll(".dot")
+        .data(buttons.filter(b => !b.eaten))
 
-  p.mousePressed = () => {
-    console.log("Mouse-Pressed 2")
-    console.log(buttonRows())
+  dots.enter()
+    .append("circle")
+    .attr("cx",   buttonX)
+    .attr("cy",   buttonY)
+    .attr("r",    buttonSize)
+    .style("fill", buttonColor);
 
-  }
+  dots.exit().remove()
+
+  dots.on("click", function(b) {
+    b.eaten = !b.eaten
+
+    // Make it invisible before removing
+    if (b.eaten) {
+      d3.select(this)
+        .attr("r", buttonSize+1)
+        .style("fill", "white")
+    }
+
+    update()
+  })
 }
 
-var bcdCard_p5 = new p5(bcdCard, 'bcd-card');
+function bcdCardUpdate() {
+  const chars = bcdCard.selectAll(".char").data(buttonRows)
+
+  chars.enter()
+    .append("text")
+    .merge(chars)
+    .attr("x", 10)
+    .attr("y", (d, i) => rowY(i))
+    .text(buttonRowToInt)
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "20px")
+
+  chars.exit().remove()
+
+}
+
+function update() {
+  buttonCardUpdate();
+
+  bcdCardUpdate();
+}
+
+///////////////////////////////////////////////////
+update()

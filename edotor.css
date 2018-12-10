@@ -1,0 +1,12 @@
+.card {
+  border: 1px;
+  border-style: dotted;
+  width: 350px;
+  height: 650px;
+  display: inline-block;
+  margin: 10px;
+}
+
+#bcd-card {
+  width: 100px;
+}
