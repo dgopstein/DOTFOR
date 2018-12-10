@@ -7,6 +7,10 @@
   margin: 10px;
 }
 
+.char {
+  white-space: pre;
+}
+
 #bcd-card {
-  width: 100px;
+  width: 105px;
 }
