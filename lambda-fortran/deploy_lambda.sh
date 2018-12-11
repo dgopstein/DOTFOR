@@ -1,4 +1,5 @@
-BASE_DIR=`pwd`
+#!/bin/bash
+BASE_DIR=$(greadlink -f ${0%/*})
 BASE_NAME=$(basename $BASE_DIR)
 
 BUILD_DIR=$BASE_DIR/build

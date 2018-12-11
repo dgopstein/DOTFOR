@@ -4,21 +4,43 @@ require 'open3'
 RELATIVE_DIR = 'lambda-fortran'
 ABSOLUTE_DIR = '/var/task/' + RELATIVE_DIR
 
+class CaptureRes
+  def initialize(res)
+    @stdout, @stderr, @status = res
+  end
+
+  def success?; @status.success?; end
+
+  def to_h; {stdout: @stdout, stderr: @stderr, status: @status}; end
+end
+
+def response(code, status, source, extras)
+  { statusCode: code,
+    body: JSON.generate({status: status, source: source}.merge(extras))}
+end
+
 def lambda_handler(event:, context:)
-  source = event["source"]
+  begin
+    p event["body"]
+    body = JSON.parse(event["body"])
 
-  File.write('/tmp/prog.f90', source)
+    source = body["source"]
 
-  cmpl_out, cmpl_err, cmpl_status = Open3.capture3(
-    {'LIBRARY_PATH' => ABSOLUTE_DIR+'/g95/lib/dan-lib'},
-    RELATIVE_DIR+'/g95/bin/x86_64-unknown-linux-gnu-g95 /tmp/prog.f90 -o /tmp/prog')
+    File.write('/tmp/prog.f90', source)
 
-  execution = if cmpl_status.success?
-                Open3.capture3("/tmp/prog")
-              else
-                ['','','']
-              end
+    cmpl = CaptureRes.new(Open3.capture3(
+      {'LIBRARY_PATH' => ABSOLUTE_DIR+'/g95/lib/dan-lib'},
+      RELATIVE_DIR+'/g95/bin/x86_64-unknown-linux-gnu-g95 /tmp/prog.f90 -o /tmp/prog'))
 
-  { statusCode: 200,
-    body: JSON.generate(compilation: [cmpl_out, cmpl_err, cmpl_status], execution: execution) }
+    if cmpl.success?
+      ex = CaptureRes.new(Open3.capture3("/tmp/prog"))
+
+      status = ex.success? ? "success" : "execution_error"
+      response(200, status, source, compilation: cmpl.to_h, execution: ex.to_h)
+    else
+      response(200, "compilation_error", source, compilation: cmpl.to_h)
+    end
+  rescue StandardError => e
+      response(500, "exception", source, error: e)
+  end
 end
