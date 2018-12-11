@@ -1,5 +1,8 @@
+require 'cgi'
 require 'json'
 require 'open3'
+
+DEBUG = true
 
 RELATIVE_DIR = 'lambda-fortran'
 ABSOLUTE_DIR = '/var/task/' + RELATIVE_DIR
@@ -21,10 +24,15 @@ end
 
 def lambda_handler(event:, context:)
   begin
-    p event["body"]
-    body = JSON.parse(event["body"])
+    puts "event['body']: #{event['body']}" if DEBUG
 
-    source = body["source"]
+    body = CGI::parse(event["body"])
+
+    puts "body: #{body}" if DEBUG
+
+    source = body["source"].first
+
+    puts "source: #{source}" if DEBUG
 
     File.write('/tmp/prog.f90', source)
 
