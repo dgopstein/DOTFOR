@@ -17,6 +17,11 @@
 
 #hopper-pane {
   width: 300px;
-  height: 800;
+  height: 800px;
   float: right;
+}
+
+#result-pane {
+  width: 1000px;
+  height: 200px;
 }

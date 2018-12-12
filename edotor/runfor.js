@@ -1,22 +1,51 @@
 cardChars = () => cardCols().map(cardColToBCD)
 cardStr = () => cardChars().join('')
 
-// 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
 
-function runFor(source) {
+const utf8decoder = new TextDecoder("utf-8")
+
+const responseText = response =>
+      response.body.getReader().read().then(x => x.value).then(x=>utf8decoder.decode(x))
+
+const responseJson = response =>
+      responseText(response).then(JSON.parse)
+
+function runSrc(src) {
+  const encodedSrc = encodeURIComponent(src)
+  //console.log("encodedSrc: ", encodedSrc)
+  return fetch("https://cors-anywhere.herokuapp.com/https://rextester.com/rundotnet/Run",
+        {"credentials":"omit",
+         "headers":
+         {"accept":"text/plain, */*; q=0.01",
+          "accept-language":"en-US,en;q=0.9",
+          "content-type":"application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with":"XMLHttpRequest"
+         },
+         "referrer":"https://rextester.com/l/fortran_online_compiler",
+         "referrerPolicy":"no-referrer-when-downgrade",
+         "body":"LanguageChoiceWrapper=45&EditorChoiceWrapper=1&LayoutChoiceWrapper=1&Program=!gfortran%2C+gcc+version+5.4.0+20160609%0D%0A%0D%0A"+encodedSrc+"&Input=&ShowWarnings=false&Privacy=&PrivacyUsers=&Title=&SavedOutput=&WholeError=&WholeWarning=&StatsToSave=&CodeGuid=&IsInEditMode=False&IsLive=False",
+         "method":"POST",
+         "mode":"cors"}).then(responseJson)
+}
+
+function runStackAndDisplay() {
   const src = cardStr()
-  $.post("https://5b4zahz6d2.execute-api.us-east-1.amazonaws.com/prod/dotfor",
-         {"source": src},
-         runForResult)
+  runSrc(src).then(displayResult)
 }
 
-function runForResult(res) {
-  console.log(res)
+function displayResult(res) {
+  var displayText;
+  if (res.Errors) {
+    displayText = "There was an error parsing your code:<br /><pre>"+res.Errors+"</pre>"
+  } else {
+    displayText = "Result:<br /><pre>"+res.Errors+"</pre>"
+  }
+  $('#result-pane').html(displayText)
 }
 
-//runFor("program hello\n   Print *, \"Hello nargs!\"\nend program Hello")
-//runFor("program sum\n    REAL X,Y,Z\n    X = 10\n    Y= 25\n    Z = X + Y\n    PRINT *,\"sum of x + y = \", Z\nend program sum\n")
-
+////////////////////////////////////////////////////////////
+//               Downloading/Saving Code
+////////////////////////////////////////////////////////////
 
 function saveCode() {
   const src = cardStr()
