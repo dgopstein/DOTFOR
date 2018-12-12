@@ -1,0 +1,23 @@
+{
+    "FunctionName": "dotfor",
+    "LastModified": "2018-12-11T21:54:31.339+0000",
+    "RevisionId": "d98faad7-4084-4a91-b074-2fa6a02011e4",
+    "MemorySize": 128,
+    "Version": "$LATEST",
+    "Role": "arn:aws:iam::239445984846:role/lambda_basic_execution",
+    "Timeout": 3,
+    "Runtime": "ruby2.5",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "CodeSha256": "SyjdUPJC/lnjIm3SuYK/hh+heTgwSgtNwq1kEBbMZsY=",
+    "Description": "",
+    "VpcConfig": {
+        "SubnetIds": [],
+        "VpcId": "",
+        "SecurityGroupIds": []
+    },
+    "CodeSize": 19825314,
+    "FunctionArn": "arn:aws:lambda:us-east-1:239445984846:function:dotfor",
+    "Handler": "lambda-fortran/compile_and_run.lambda_handler"
+}

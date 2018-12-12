@@ -9,12 +9,17 @@ const [white, black, green, yellow, blue, red] =
 const n_rows = 6
 const n_cols = 12
 
-const buttons =
+const newCard = () =>
       _.flatMap(_.range(n_cols), col =>
                 _.range(n_rows).map(row =>
                                     ({col: col,
                                       row: row,
                                       eaten: false})));
+
+
+var currentCard = newCard()
+
+const stack = [currentCard]
 
 const buttonSize = 15;
 const buttonMargin = 50;
@@ -35,11 +40,11 @@ const buttonX = b => (b.col+1)*buttonMargin
 const buttonY = b => colY(b.row)
 
 //////////////////////////////////////////////////////////////
-//                         BCD Card
+//                         BCD Pane
 //////////////////////////////////////////////////////////////
 
-const buttonCols = () =>
-      _.map(_.groupBy(buttons, b => b.col), (v, k) => v)
+const cardCols = () =>
+      _.map(_.groupBy(currentCard, b => b.col), (v, k) => v)
       .map(col => _.sortBy(col, b => b.row))
 
 
@@ -51,25 +56,25 @@ const gbcd =
 const bcd = gbcd
 
 const buttonToInt = b => (b.eaten ? 0 : 1) * Math.pow(2, b.row)
-const buttonColToInt = buttonCol => _.sum(buttonCol.map(buttonToInt))
-const buttonColToBCD = buttonCol => bcd[buttonColToInt(buttonCol)]
+const cardColToInt = cardCol => _.sum(cardCol.map(buttonToInt))
+const cardColToBCD = cardCol => bcd[cardColToInt(cardCol)]
 
-const buttonCard = d3.select("#button-card")
+const cardPane = d3.select("#card-pane")
             .append("svg")
             .attr("width", 651)
             .attr("height", 350);
 
-const bcdCard = d3.select("#bcd-card")
+const bcdPane = d3.select("#bcd-pane")
             .append("svg")
             .attr("width", 651)
             .attr("height", 105);
 
-//buttonCard.on("click", function(b) { console.log("button card clicked") })
+//cardPane.on("click", function(b) { console.log("button pane clicked") })
 
-function buttonCardUpdate() {
-  const selectDots = () => buttonCard.selectAll(".dot")
+function cardPaneUpdate() {
+  const selectDots = () => cardPane.selectAll(".dot")
   const dots = selectDots()
-        .data(buttons)
+        .data(currentCard)
 
   dots.enter()
     .append("circle")
@@ -89,12 +94,14 @@ function buttonCardUpdate() {
     })
 }
 
-function bcdCardUpdate() {
-  const charSelector = () => bcdCard.selectAll(".char")
+function bcdPaneUpdate() {
+  const charSelector = () => bcdPane.selectAll(".char")
 
   charSelector().remove()
 
-  const chars = charSelector().data(buttonCols)
+  const chars = charSelector().data(cardCols)
+
+  console.log(chars)
 
   chars.enter()
     .merge(chars)
@@ -102,8 +109,8 @@ function bcdCardUpdate() {
     .attr("class", "char")
     .attr("x", (d, i) => colY(i))
     .attr("y", 27)
-    .text(b => //(buttonColToInt(b).toString().padStart(2, " ") + " => " +
-                buttonColToBCD(b))
+    .text(b => //(cardColToInt(b).toString().padStart(2, " ") + " => " +
+                cardColToBCD(b))
     .attr("font-family", "courier")
     .attr("font-size", "20px")
 
@@ -112,9 +119,9 @@ function bcdCardUpdate() {
 }
 
 function update() {
-  buttonCardUpdate();
-
-  bcdCardUpdate();
+  cardPaneUpdate();
+  bcdPaneUpdate();
+  hopperPaneUpdate()
 }
 
 ///////////////////////////////////////////////////
