@@ -33,3 +33,7 @@
 .selected-minicard {
   background-color: #333;
 }
+
+#load-file-input{
+  display: none;
+}

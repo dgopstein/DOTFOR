@@ -34,7 +34,7 @@ function hopperPaneUpdate() {
     .attr("height", (d, i) => minicard_height)
 
   minicard_update.select("text")
-    .text((d, i) => {console.log("cardStr(i): ", i, d, cardStr(d)); return cardStr(d)})
+    .text((d, i) => {/*console.log("cardStr(i): ", i, d, cardStr(d));*/ return cardStr(d)})
     .attr("x", minicard_width * .15 )
     .attr("y", minicard_height * .8)
     .attr("fill", (d, i) => "black")

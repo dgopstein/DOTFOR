@@ -9,17 +9,32 @@ const [white, black, green, yellow, blue, red] =
 const n_rows = 6
 const n_cols = 12
 
-const newCard = () =>
-      _.flatMap(_.range(n_cols), col =>
-                _.range(n_rows).map(row =>
-                                    ({col: col,
-                                      row: row,
-                                      eaten: false})));
+//const newCard = () =>
+//      _.flatMap(_.range(n_cols), col =>
+//                _.range(n_rows).map(row =>
+//                                    ({col: col,
+//                                      row: row,
+//                                      eaten: false})));
 
+// https://stackoverflow.com/questions/8405453/is-there-a-shortcut-to-create-padded-array-in-javascript
+const rpad_array = (arr,len,fill) =>
+  arr.concat(Array(len).fill(fill)).slice(0,len);
+
+const lpad_array = (arr,len,fill) =>
+      Array(len - arr.length).fill(fill).concat(arr)
+
+const newCard = () => _.range(n_cols).map(() => "!")
 
 var currentCard = newCard()
 
-const stack = [currentCard]
+var stack = [currentCard]
+
+function updateCurrentCard(newCard) {
+  const currentIdx = stack.indexOf(currentCard)
+  currentCard = newCard
+  stack[currentIdx] = currentCard
+}
+
 
 function addCard() {
   stack.push(newCard())
@@ -48,25 +63,41 @@ const buttonY = b => (b.row+1)*buttonMargin
 //                         BCD Pane
 //////////////////////////////////////////////////////////////
 
-const cardCols = card =>
-      _.map(_.groupBy(card, b => b.col), (v, k) => v)
-      .map(col => _.sortBy(col, b => b.row))
-
-const cardChars = card => cardCols(card).map(cardColToBCD)
-const cardStr = card => cardChars(card).join('')
-
-
-
 const gbcd =
 ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '[', '#', '@', ':', '>', '?',
  ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', '&', '.', ']', '(', '<', '\\',
  '^', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '-', '$', '*', ')', ';', "'",
  '+', '/', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', ',', '%', '=', '"', '!']
 const bcd = gbcd
+const charToIntObj = _.mapValues(_.invert(bcd), parseInt)
 
 const buttonToInt = b => (b.eaten ? 0 : 1) * Math.pow(2, b.row)
-const cardColToInt = cardCol => _.sum(cardCol.map(buttonToInt))
-const cardColToBCD = cardCol => bcd[cardColToInt(cardCol)]
+const buttonColToInt = buttonCol => _.sum(buttonCol.map(buttonToInt))
+const buttonColToBCD = buttonCol => bcd[buttonColToInt(buttonCol)]
+
+const buttonCols = card =>
+      _.map(_.groupBy(card, b => b.col), (v, k) => v)
+      .map(col => _.sortBy(col, b => b.row))
+
+const buttonChars = card => buttonCols(card).map(buttonColToBCD)
+const buttonStr = card => buttonChars(card).join('')
+
+
+const cardStr = card => card.join('')
+const cardChars = card => card
+const stackStr = () => stack.map(cardStr).join("\n")
+
+const charToInt = x => charToIntObj[x.toUpperCase()]
+const intToBin = x => lpad_array(x.toString(2).split('').map(c => parseInt(c)), n_rows, 0)
+const charToBin = c => intToBin(charToInt(c))
+const cardBinMatrix = card => cardChars(card).map(charToBin)
+const cardButtons = card => _.sortBy(cardBinMatrix(card).flatMap(
+  (col, x) => col.map(
+    (bin_val, y) => {return{
+      col: x,
+      row: (n_rows-1) - y,
+      eaten: 0 == bin_val}
+                    })), ['col', 'row'])
 
 const cardPane = d3.select("#card-pane")
             .append("svg")
@@ -82,8 +113,11 @@ const bcdPane = d3.select("#bcd-pane")
 
 function cardPaneUpdate() {
   const selectDots = () => cardPane.selectAll(".dot")
+
+  const currentCardButtons = cardButtons(currentCard)
+
   const dots = selectDots()
-        .data(currentCard)
+        .data(currentCardButtons)
 
   dots.enter()
     .append("circle")
@@ -97,10 +131,14 @@ function cardPaneUpdate() {
   dots.exit().remove()
 
   selectDots().on("click", function(b) {
-      b.eaten = !b.eaten
+    b.eaten = !b.eaten
 
-      update()
-    })
+    const btnChrs = buttonChars(currentCardButtons)
+
+    updateCurrentCard(btnChrs)
+
+    update()
+  })
 }
 
 function bcdPaneUpdate() {
@@ -108,7 +146,7 @@ function bcdPaneUpdate() {
 
   charSelector().remove()
 
-  const chars = charSelector().data(x => cardCols(currentCard))
+  const chars = charSelector().data(x => cardChars(currentCard))
 
   chars.enter()
     .merge(chars)
@@ -116,13 +154,11 @@ function bcdPaneUpdate() {
     .attr("class", "char")
     .attr("x", (d, i) => colX(i))
     .attr("y", 27)
-    .text(b => //(cardColToInt(b).toString().padStart(2, " ") + " => " +
-                cardColToBCD(b))
+    .text(b => b)
     .attr("font-family", "courier")
     .attr("font-size", "20px")
 
   chars.exit().remove()
-
 }
 
 function update() {

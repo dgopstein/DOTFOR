@@ -43,9 +43,27 @@ function displayResult(res) {
 //               Downloading/Saving Code
 ////////////////////////////////////////////////////////////
 
+function uploadCode() {
+  const file_input = $('#load-file-input')
+  file_input.click()
+
+  file_input.change(function (e) {
+    const file = file_input.get(0).files[0]
+    const fr = new FileReader()
+    fr.onload = () => loadCode(fr.result)
+    fr.readAsText(file)
+  })
+}
+
+function loadCode(data)  {
+  lines = data.split("\n")
+  lines.map(l => rpad_array(l, n_cols, " "))
+  stack = lines
+}
+
 function saveCode() {
-  const src = cardStr()
-  download("dotfor.f90", src)
+  const src = stackStr()
+  download("dotfor.f", src)
 }
 
 function download(filename, text) {
