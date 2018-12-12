@@ -21,6 +21,11 @@ var currentCard = newCard()
 
 const stack = [currentCard]
 
+function addCard() {
+  stack.push(newCard())
+  update()
+}
+
 const buttonSize = 15;
 const buttonMargin = 50;
 
@@ -35,17 +40,21 @@ const buttonColor = button => {
   }
 }
 
-const colY = row_idx => (row_idx+1)*buttonMargin;
-const buttonX = b => (b.col+1)*buttonMargin
-const buttonY = b => colY(b.row)
+const colX = row_idx => (row_idx+1)*buttonMargin;
+const buttonX = b => colX(b.col)
+const buttonY = b => (b.row+1)*buttonMargin
 
 //////////////////////////////////////////////////////////////
 //                         BCD Pane
 //////////////////////////////////////////////////////////////
 
-const cardCols = () =>
-      _.map(_.groupBy(currentCard, b => b.col), (v, k) => v)
+const cardCols = card =>
+      _.map(_.groupBy(card, b => b.col), (v, k) => v)
       .map(col => _.sortBy(col, b => b.row))
+
+const cardChars = card => cardCols(card).map(cardColToBCD)
+const cardStr = card => cardChars(card).join('')
+
 
 
 const gbcd =
@@ -99,15 +108,13 @@ function bcdPaneUpdate() {
 
   charSelector().remove()
 
-  const chars = charSelector().data(cardCols)
-
-  console.log(chars)
+  const chars = charSelector().data(x => cardCols(currentCard))
 
   chars.enter()
     .merge(chars)
     .append("text")
     .attr("class", "char")
-    .attr("x", (d, i) => colY(i))
+    .attr("x", (d, i) => colX(i))
     .attr("y", 27)
     .text(b => //(cardColToInt(b).toString().padStart(2, " ") + " => " +
                 cardColToBCD(b))

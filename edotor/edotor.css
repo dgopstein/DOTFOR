@@ -1,17 +1,17 @@
 .pane {
   border: 1px;
   border-style: dotted;
-  width: 650px;
-  height: 350px;
   display: block;
   margin: 10px;
 }
 
-.char {
-  white-space: pre;
+#card-pane {
+  width: 650px;
+  height: 350px;
 }
 
 #bcd-pane {
+  width: 650px;
   height: 40px;
 }
 
@@ -24,4 +24,12 @@
 #result-pane {
   width: 1000px;
   height: 200px;
+}
+
+.char {
+  white-space: pre;
+}
+
+.selected-minicard {
+  background-color: #333;
 }

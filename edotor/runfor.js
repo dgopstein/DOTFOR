@@ -1,7 +1,3 @@
-cardChars = () => cardCols().map(cardColToBCD)
-cardStr = () => cardChars().join('')
-
-
 const utf8decoder = new TextDecoder("utf-8")
 
 const responseText = response =>
