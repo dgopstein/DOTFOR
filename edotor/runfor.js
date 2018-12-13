@@ -25,16 +25,18 @@ function runSrc(src) {
 }
 
 function runStackAndDisplay() {
-  const src = cardStr()
+  const src = stackStr()
   runSrc(src).then(displayResult)
 }
 
+var lastResult;
 function displayResult(res) {
+  lastResult = res;
   var displayText;
   if (res.Errors) {
     displayText = "There was an error parsing your code:<br /><pre>"+res.Errors+"</pre>"
   } else {
-    displayText = "Result:<br /><pre>"+res.Errors+"</pre>"
+    displayText = "Result:<br /><pre>"+res.Result+"</pre>"
   }
   $('#result-pane').html(displayText)
 }
@@ -57,8 +59,10 @@ function uploadCode() {
 
 function loadCode(data)  {
   lines = data.split("\n")
-  lines.map(l => rpad_array(l, n_cols, " "))
-  stack = lines
+  chars = lines.map(l => rpad_array(l.split(''), n_cols, " "))
+  stack = chars
+  currentCard = stack[0]
+  update()
 }
 
 function saveCode() {

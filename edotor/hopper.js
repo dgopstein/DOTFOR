@@ -27,11 +27,12 @@ function hopperPaneUpdate() {
 
   const minicard_update = minicard.merge(cardSelector())
 
-  minicard_update.select("rect").attr("fill", (d, i) => "none")
+  minicard_update.select("rect").attr("fill", "white")
     .attr("stroke", (d, i) => "black")
     .style("stroke-dasharray", ("1, 1"))
     .attr("width", (d, i) => minicard_width)
     .attr("height", (d, i) => minicard_height)
+
 
   minicard_update.select("text")
     .text((d, i) => {/*console.log("cardStr(i): ", i, d, cardStr(d));*/ return cardStr(d)})
@@ -45,6 +46,7 @@ function hopperPaneUpdate() {
     currentCard = b
 
     d3.select(this).select("text").attr("class", "selected-minicard");
+    console.log("I just clicked this: ", this)
 
     console.log("clicked stack card: ", i)
 
