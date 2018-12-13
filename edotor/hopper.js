@@ -1,54 +1,41 @@
 const card_aspect_ratio = 13/7
 
 const hopperPane = d3.select("#hopper-pane")
-            .append("svg")
-            .attr("width", 300)
-            .attr("height", 800);
+            //.append("svg")
+            //.attr("width", 300)
+            //.attr("height", 800);
 
 
 function hopperPaneUpdate() {
   const cardSelector = () => hopperPane.selectAll(".stack-card")
 
-  const cards = cardSelector().data(stack)
+  const cards = cardSelector().data(stack, c => c.join(''))
 
   const minicard_width = 280
   const minicard_height = 40
 
   const minicard = cards.enter()
-        .append("g")
-        .attr("transform", function(d, i) { return "translate(10," + (10+i*1.2*minicard_height) + ")"; })
+        .append("div")
         .attr("class", "stack-card")
 
-  minicard
-    .append("rect")
+  cards.exit().remove()
 
   minicard
     .append("text")
+    .attr("class", "stack-text")
 
-  const minicard_update = minicard.merge(minicard)
+  const minicard_update = cards.enter().merge(cards)
 
-  minicard_update.select("rect").attr("fill", "white")
-    .attr("stroke", (d, i) => "black")
-    .style("stroke-dasharray", ("1, 1"))
-    .attr("width", (d, i) => minicard_width)
-    .attr("height", (d, i) => minicard_height)
+  const minicard_text = minicard_update.selectAll(".stack-text")
+        .text((d, i) => cardStr(d))
+        .classed("selected-minicard", b => b == currentCard)
+        .style("text-align", "center")
+        .style("font-family", "courier")
+        .style("font-size", "22px")
 
-
-  minicard_update.select("text")
-    .text((d, i) => {/*console.log("cardStr(i): ", i, d, cardStr(d));*/ return cardStr(d)})
-    .attr("x", minicard_width * .15 )
-    .attr("y", minicard_height * .8)
-    .attr("fill", (d, i) => "black")
-    .attr("font-family", "courier")
-    .attr("font-size", "30px")
-
-  minicard.on("click", function(b,i) {
+  minicard_text.on("click", function(b,i) {
     currentCard = b
-
-    d3.select(this).attr("class", "selected-minicard");
 
     update()
   })
-
-  cards.exit().remove()
 }

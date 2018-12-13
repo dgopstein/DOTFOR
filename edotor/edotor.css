@@ -21,7 +21,7 @@
 }
 
 #hopper-pane {
-  width: 300px;
+  width: 200px;
   height: 800px;
 }
 
@@ -34,8 +34,15 @@
   white-space: pre;
 }
 
+.stack-text {
+  display: block;
+  margin: 10px;
+}
+
 .selected-minicard {
-  fill: #c38;
+  //background: #dddddd;
+  border: 1px;
+  border-style: dotted;
 }
 
 #load-file-input{

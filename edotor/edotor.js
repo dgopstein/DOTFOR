@@ -29,7 +29,7 @@ var currentCard = newCard()
 
 var stack = [currentCard]
 
-function updateCurrentCard(newCard) {
+function mutateCurrentCard(newCard) {
   const currentIdx = stack.indexOf(currentCard)
   currentCard = newCard
   stack[currentIdx] = currentCard
@@ -37,7 +37,8 @@ function updateCurrentCard(newCard) {
 
 
 function addCard() {
-  stack.push(newCard())
+  currentCard = newCard()
+  stack.push(currentCard)
   update()
 }
 
@@ -134,7 +135,7 @@ function cardPaneUpdate() {
 
     const btnChrs = buttonChars(currentCardButtons)
 
-    updateCurrentCard(btnChrs)
+    mutateCurrentCard(btnChrs)
 
     update()
   })
