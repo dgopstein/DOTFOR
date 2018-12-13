@@ -69,11 +69,12 @@ const gbcd =
  '^', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '-', '$', '*', ')', ';', "'",
  '+', '/', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', ',', '%', '=', '"', '!']
 const bcd = gbcd
-const charToIntObj = _.mapValues(_.invert(bcd), parseInt)
+const charToIntObj = _.mapValues(_.invert(bcd), x => parseInt(x))
 
-const buttonToInt = b => (b.eaten ? 0 : 1) * Math.pow(2, b.row)
-const buttonColToInt = buttonCol => _.sum(buttonCol.map(buttonToInt))
-const buttonColToBCD = buttonCol => bcd[buttonColToInt(buttonCol)]
+const buttonColToBCD = buttonCol => {
+  const intVal = _.sum(buttonCol.map(b => (b.eaten ? 0 : 1) * Math.pow(2, b.row)))
+  return bcd[intVal]
+}
 
 const buttonCols = card =>
       _.map(_.groupBy(card, b => b.col), (v, k) => v)
@@ -109,8 +110,6 @@ const bcdPane = d3.select("#bcd-pane")
             .attr("width", 651)
             .attr("height", 105);
 
-//cardPane.on("click", function(b) { console.log("button pane clicked") })
-
 function cardPaneUpdate() {
   const selectDots = () => cardPane.selectAll(".dot")
 
@@ -130,7 +129,7 @@ function cardPaneUpdate() {
 
   dots.exit().remove()
 
-  selectDots().on("click", function(b) {
+  selectDots().on("click", function(b, i) {
     b.eaten = !b.eaten
 
     const btnChrs = buttonChars(currentCardButtons)

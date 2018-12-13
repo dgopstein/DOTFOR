@@ -59,7 +59,7 @@ function uploadCode() {
 
 function loadCode(data)  {
   lines = data.split("\n")
-  chars = lines.map(l => rpad_array(l.split(''), n_cols, " "))
+  chars = lines.map(l => rpad_array(l.toUpperCase().split(''), n_cols, " "))
   stack = chars
   currentCard = stack[0]
   update()

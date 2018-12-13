@@ -25,7 +25,7 @@ function hopperPaneUpdate() {
   minicard
     .append("text")
 
-  const minicard_update = minicard.merge(cardSelector())
+  const minicard_update = minicard.merge(minicard)
 
   minicard_update.select("rect").attr("fill", "white")
     .attr("stroke", (d, i) => "black")
@@ -45,10 +45,7 @@ function hopperPaneUpdate() {
   minicard.on("click", function(b,i) {
     currentCard = b
 
-    d3.select(this).select("text").attr("class", "selected-minicard");
-    console.log("I just clicked this: ", this)
-
-    console.log("clicked stack card: ", i)
+    d3.select(this).attr("class", "selected-minicard");
 
     update()
   })
