@@ -58,9 +58,15 @@ function uploadCode() {
 }
 
 function loadCode(data)  {
-  lines = data.split("\n")
-  chars = lines.map(l => rpad_array(l.toUpperCase().split(''), n_cols, " "))
-  deck = chars
+  const lines = data.split("\n")
+    .map(l => rpad_array(l.split(''), n_cols, ' ')
+         .map(c => {
+           const upchar = c.toUpperCase()
+           const bcdChar = charToIntObj[c] ? c : '!'
+           return bcdChar
+         }))
+
+  deck = lines
   currentCard = deck[0]
   update()
 }

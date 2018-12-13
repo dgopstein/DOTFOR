@@ -56,12 +56,12 @@ const buttonColor = button => {
   }
 }
 
-const colX = row_idx => (row_idx+1)*buttonMargin;
+const colX = row_idx => (row_idx+.75)*buttonMargin;
 const buttonX = b => colX(b.col)
-const buttonY = b => (b.row+1)*buttonMargin
+const buttonY = b => (b.row+.75)*buttonMargin
 
 //////////////////////////////////////////////////////////////
-//                         BCD Pane
+//                         Type Conversions
 //////////////////////////////////////////////////////////////
 
 const gbcd =
@@ -101,14 +101,20 @@ const cardButtons = card => _.sortBy(cardBinMatrix(card).flatMap(
       eaten: 0 == bin_val}
                     })), ['col', 'row'])
 
+//////////////////////////////////////////////////////////////
+//                         Card Display
+//////////////////////////////////////////////////////////////
+
+const cardWidth = 630
+
 const cardPane = d3.select("#card-pane")
             .append("svg")
-            .attr("width", 651)
-            .attr("height", 350);
+            .attr("width", cardWidth)
+            .attr("height", 325);
 
 const bcdPane = d3.select("#bcd-pane")
             .append("svg")
-            .attr("width", 651)
+            .attr("width", cardWidth)
             .attr("height", 105);
 
 function cardPaneUpdate() {
@@ -152,11 +158,11 @@ function bcdPaneUpdate() {
     .merge(chars)
     .append("text")
     .attr("class", "char")
-    .attr("x", (d, i) => colX(i))
-    .attr("y", 27)
+    .attr("x", (d, i) => colX(i)-10)
+    .attr("y", 30)
     .text(b => b)
     .attr("font-family", "courier")
-    .attr("font-size", "20px")
+    .attr("font-size", "30px")
 
   chars.exit().remove()
 }
@@ -167,5 +173,8 @@ function update() {
   hopperPaneUpdate()
 }
 
-///////////////////////////////////////////////////
 update()
+
+loadCode(`PROGRAM DOTS
+PRINT *,"HI"
+END`)

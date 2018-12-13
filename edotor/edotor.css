@@ -8,25 +8,19 @@
   border-style: dotted;
   display: block;
   margin: 10px;
-}
-
-#card-pane {
-  width: 650px;
-  height: 350px;
+  padding: 10px;
 }
 
 #bcd-pane {
-  width: 650px;
   height: 40px;
 }
 
 #hopper-pane {
-  width: 200px;
+  width: 180px;
   min-height: 644px;
 }
 
 #result-pane {
-  width: 650px;
   height: 200px;
 }
 
@@ -36,16 +30,25 @@
 
 .deck-text {
   display: block;
-  margin: 10px;
-}
-
-.selected-minicard {
-  //background: #dddddd;
+  padding-left: 10px;
   border: 1px;
   border-style: dotted;
+  border-color: white;
+}
+
+.selected-deck-card {
+  //background: #dddddd;
+  border-color: black;
 }
 
 #load-file-input{
   display: none;
 }
 
+.title {
+  margin-top: 7px;
+  margin-left: 10px;
+  font-size: 30px;
+  font-family: courier;
+  color: #aaa;
+}
