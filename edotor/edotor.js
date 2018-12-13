@@ -27,18 +27,18 @@ const newCard = () => _.range(n_cols).map(() => "!")
 
 var currentCard = newCard()
 
-var stack = [currentCard]
+var deck = [currentCard]
 
 function mutateCurrentCard(newCard) {
-  const currentIdx = stack.indexOf(currentCard)
+  const currentIdx = deck.indexOf(currentCard)
   currentCard = newCard
-  stack[currentIdx] = currentCard
+  deck[currentIdx] = currentCard
 }
 
 
 function addCard() {
   currentCard = newCard()
-  stack.push(currentCard)
+  deck.push(currentCard)
   update()
 }
 
@@ -87,7 +87,7 @@ const buttonStr = card => buttonChars(card).join('')
 
 const cardStr = card => card.join('')
 const cardChars = card => card
-const stackStr = () => stack.map(cardStr).join("\n")
+const deckStr = () => deck.map(cardStr).join("\n")
 
 const charToInt = x => charToIntObj[x.toUpperCase()]
 const intToBin = x => lpad_array(x.toString(2).split('').map(c => parseInt(c)), n_rows, 0)

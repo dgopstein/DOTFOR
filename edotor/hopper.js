@@ -7,26 +7,26 @@ const hopperPane = d3.select("#hopper-pane")
 
 
 function hopperPaneUpdate() {
-  const cardSelector = () => hopperPane.selectAll(".stack-card")
+  const cardSelector = () => hopperPane.selectAll(".deck-card")
 
-  const cards = cardSelector().data(stack, c => c.join(''))
+  const cards = cardSelector().data(deck, c => c.join(''))
 
   const minicard_width = 280
   const minicard_height = 40
 
   const minicard = cards.enter()
         .append("div")
-        .attr("class", "stack-card")
+        .attr("class", "deck-card")
 
   cards.exit().remove()
 
   minicard
     .append("text")
-    .attr("class", "stack-text")
+    .attr("class", "deck-text")
 
   const minicard_update = cards.enter().merge(cards)
 
-  const minicard_text = minicard_update.selectAll(".stack-text")
+  const minicard_text = minicard_update.selectAll(".deck-text")
         .text((d, i) => cardStr(d))
         .classed("selected-minicard", b => b == currentCard)
         .style("text-align", "center")

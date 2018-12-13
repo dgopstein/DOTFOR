@@ -22,7 +22,7 @@
 
 #hopper-pane {
   width: 200px;
-  height: 800px;
+  min-height: 644px;
 }
 
 #result-pane {
@@ -34,7 +34,7 @@
   white-space: pre;
 }
 
-.stack-text {
+.deck-text {
   display: block;
   margin: 10px;
 }

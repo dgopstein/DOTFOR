@@ -24,8 +24,8 @@ function runSrc(src) {
          "mode":"cors"}).then(responseJson)
 }
 
-function runStackAndDisplay() {
-  const src = stackStr()
+function runDeckAndDisplay() {
+  const src = deckStr()
   runSrc(src).then(displayResult)
 }
 
@@ -60,13 +60,13 @@ function uploadCode() {
 function loadCode(data)  {
   lines = data.split("\n")
   chars = lines.map(l => rpad_array(l.toUpperCase().split(''), n_cols, " "))
-  stack = chars
-  currentCard = stack[0]
+  deck = chars
+  currentCard = deck[0]
   update()
 }
 
 function saveCode() {
-  const src = stackStr()
+  const src = deckStr()
   download("dotfor.f", src)
 }
 
