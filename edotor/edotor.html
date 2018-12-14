@@ -16,11 +16,23 @@
         <div id="bcd-pane" class="pane"></div>
         <div id="card-pane" class="pane"></div>
         <div id="control-pane" class="pane">
-        <button type="button" onclick="runDeckAndDisplay()">Run Code</button>
-        <button type="button" onclick="saveCode()">Save Code</button>
-        <button type="button" onclick="uploadCode()">Upload Code</button>
-        <input type="file" id="load-file-input">
-        <button type="button" onclick="addCard()">Add Card</button>
+
+          <div id="run-buttons" class="button-box">
+            <button type="button" onclick="runDeckAndDisplay()">Run Code</button>
+            <input type="file" id="load-file-input">
+          </div>
+
+          <div id="file-buttons" class="button-box">
+            <button type="button" onclick="saveCode()">Save Code</button>
+            <button type="button" onclick="uploadCode()">Upload Code</button>
+          </div>
+
+          <div id="deck-buttons" class="button-box">
+            <button type="button" onclick="nextCard()">Next Card</button>
+            <button type="button" onclick="prevCard()">Prev Card</button>
+            <button type="button" onclick="addCard()">Add Card</button>
+            <button type="button" onclick="removeCard()">Remove Card</button>
+          </div>
         </div>
         <div id="result-pane" class="pane"></div>
       </div>
@@ -33,8 +45,8 @@
             </div>
           </div>
           -->
-          <div id="deck-container">
-          </div>
+          <ul id="deck-container">
+          </ul>
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ function hopperPaneUpdate() {
   const cards = cardSelector().data(deck, c => c.join(''))
 
   const minicard = cards.enter()
-        .append("div")
+        .append("li")
         .attr("class", "deck-card")
 
   cards.exit().remove()
@@ -30,4 +30,31 @@ function hopperPaneUpdate() {
 
     update()
   })
+}
+
+const currentCardIdx = () => deck.indexOf(currentCard)
+
+function nextCard() {
+  currentCard = deck[_.min([currentCardIdx()+1, deck.length-1])]
+  update()
+}
+
+function prevCard() {
+  currentCard = deck[_.max([currentCardIdx()-1, 0])]
+  update()
+}
+
+function addCard() {
+  currentCard = newCard()
+  deck.push(currentCard)
+  update()
+}
+
+function removeCard() {
+  if (deck.length > 1) {
+    const oldIdx = currentCardIdx()
+    deck = _.pull(deck, currentCard)
+    currentCard = deck[_.min([oldIdx, deck.length])]
+    update()
+  }
 }

@@ -36,12 +36,6 @@ function mutateCurrentCard(newCard) {
 }
 
 
-function addCard() {
-  currentCard = newCard()
-  deck.push(currentCard)
-  update()
-}
-
 const buttonSize = 15;
 const buttonMargin = 50;
 

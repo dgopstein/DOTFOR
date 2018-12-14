@@ -21,11 +21,16 @@
 }
 
 #result-pane {
-  height: 200px;
+  height: 165px;
 }
 
 .char {
   white-space: pre;
+}
+
+#deck-container {
+  list-style-type: none;
+  padding: 0;
 }
 
 .deck-text {
@@ -39,6 +44,11 @@
 .selected-deck-card {
   //background: #dddddd;
   border-color: black;
+}
+
+.button-box {
+  display: inline-block;
+  margin: 0 15 0 15;
 }
 
 #load-file-input{
