@@ -11,6 +11,17 @@
     <link rel="stylesheet" href="edotor.css">
   </head>
   <body>
+    <div id="vision">
+      <button type="button" id="circlesButton" class="btn btn-primary">Circle Detection</button>
+      <input type="file" id="fileInput" name="file" />
+      <img id="imageSrc" src="vision/shadowy_buttons.jpg" style="width: 300px;"/>
+      <canvas id="grayCanvas" style="width: 300px;"></canvas>
+      <canvas id="imageCanvas" style="width: 300px;"></canvas>
+
+      <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />
+      <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />
+
+    </div>
     <div id="edotor">
       <div id="left-half">
         <div id="bcd-pane" class="pane"></div>
@@ -51,7 +62,10 @@
       </div>
     </div>
   </body>
-  <script src="hopper.js"></script>
-  <script src="runfor.js"></script>
-  <script src="edotor.js"></script>
+  <script src="hopper.js" type="text/javascript"></script>
+  <script src="runfor.js" type="text/javascript"></script>
+  <script src="edotor.js" type="text/javascript"></script>
+  <script async src="vision/vision.js" type="text/javascript"></script>
+  <script async src="vision/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+
 </html>
