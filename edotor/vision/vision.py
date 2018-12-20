@@ -7,13 +7,15 @@ import matplotlib.pyplot as plt
 from collections import Counter
 from sklearn.cluster import KMeans
 from sklearn.neighbors import KernelDensity
-import scipy.signal as signal
+import scipy
 import math
 
 # https://medium.com/@manivannan_data/resize-image-using-opencv-python-d2cdbbc480f0
 def scale(oriimg, imgScale):
-    height, width, depth = oriimg.shape
     newX,newY = oriimg.shape[1]*imgScale, oriimg.shape[0]*imgScale
+    print("scale ", imgScale)
+    print("shape ", oriimg.shape)
+    print("newYX ", (newY,newX))
     newimg = cv2.resize(oriimg,(int(newX),int(newY)))
     return newimg
 
@@ -27,7 +29,7 @@ def destroyWindowOnKey():
 
 def loadScaledSat(img_path):
     orig_img = cv2.imread(img_path)
-    img = scale(orig_img, .3)
+    img = scale(orig_img, .25)
     hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
     hsv_channels = cv2.split(hsv);
     sat = hsv_channels[1]
@@ -91,8 +93,8 @@ def angleMode(circles):
     x_grid = np.linspace(0, 180, 200)
     pdf = np.exp(kde.score_samples(x_grid[:, np.newaxis]))
 
-    peaks, props = signal.find_peaks(pdf)
-    signal.peak_prominences(pdf, peaks)
+    peaks, props = scipy.signal.find_peaks(pdf)
+    scipy.signal.peak_prominences(pdf, peaks)
 
     fig, ax = plt.subplots()
     ax.plot(x_grid, pdf, label="hello")
@@ -100,10 +102,11 @@ def angleMode(circles):
     return x_grid[np.argmax(pdf)]
 
 sat = loadScaledSat('/Users/dgopstein/dotfor/edotor/vision/shadowy_buttons.jpg')
+#cv2.imwrite('shadowy_buttons_sat.png',sat)
 tilted_sat = loadScaledSat('/Users/dgopstein/dotfor/edotor/vision/shadowy_buttons_tilted_35.jpg')
 
-#showImage(np.hstack([sat, tilted_sat]))
-#destroyWindowOnKey()
+showImage(np.hstack([sat, tilted_sat]))
+destroyWindowOnKey()
 
 sat_circles = findCircles(sat)
 tilted_circles = findCircles(tilted_sat)
@@ -113,6 +116,33 @@ radiiMode(tilted_circles)
 
 angleMode(sat_circles)
 angleMode(tilted_circles)
+
+
+def findScaledCard(factor=1):
+    tmpl_match = scale(template, factor)
+    res = cv2.matchTemplate(sat,tmpl_match,cv2.TM_CCOEFF_NORMED)
+    best_pt = np.unravel_index(np.argmax(res, axis=None), res.shape, order="C")
+    print("best_pt: ", best_pt)
+    print("res.shape: ", res.shape)
+    print("best_res", np.max(res))
+    print("best_res2", res[best_pt])
+    best_res = res[best_pt]
+    return (best_res, best_pt[::-1], tmpl_match.shape)
+
+sat_match = sat.copy()
+template = cv2.imread('card_template.png',0)
+showImage(template)
+tmpl_w, tmpl_h = template.shape[::-1]
+sat_w, sat_h = sat.shape[::-1]
+best_factor = scipy.optimize.minimize_scalar((lambda x: -findScaledCard(x)[0]), method='bounded', bounds=(.25, min([(sat_h-1)/tmpl_h, (sat_w-1)/tmpl_w])))
+best_scale = best_factor.x
+best_res, best_pt, best_shape = findScaledCard(best_scale)
+
+cv2.rectangle(sat_match, best_pt, (best_pt[0]+int(best_scale*tmpl_w),
+                                   best_pt[1]+int(best_scale*tmpl_h)), (0,0,255), 2)
+destroyWindowOnKey()
+showImage(sat_match)
+
 
 #output = sat.copy()
 #x1 = 100
