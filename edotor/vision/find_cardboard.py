@@ -5,6 +5,7 @@ import cv2
 import imutils
 import sklearn
 import math
+import itertools
 
 # https://github.com/Aqsa-K/Car-Number-Plate-Detection-OpenCV-Python/blob/master/CarPlateDetection.py
 
@@ -61,7 +62,6 @@ def drawLines(in_img, lines, labels=[]):
             off = 50*label
             color = [int((0+off)%255), int((100+2*off)%255), int((200+3*off)%255)]
 
-        print("color: ", color)
         cv2.line(img,(x1,y1),(x2,y2),color=color,thickness=2)
     return img
 
@@ -88,8 +88,24 @@ if __name__ == '__main__':
 ###########################################################################
 
 
+###########################################################################
+# https://stackoverflow.com/questions/3252194/numpy-and-line-intersections
+###########################################################################
+def perp( a ) :
+    b = np.empty_like(a)
+    b[0] = -a[1]
+    b[1] = a[0]
+    return b
 
-
+def seg_intersect(a1,a2, b1,b2) :
+    da = a2-a1
+    db = b2-b1
+    dp = a1-b1
+    dap = perp(da)
+    denom = np.dot( dap, db)
+    num = np.dot( dap, dp )
+    return (num / denom.astype(float))*db + b1
+###########################################################################
 
 img_path = '/Users/dgopstein/dotfor/edotor/vision/button_imgs/20181216_150759.jpg'
 
@@ -133,6 +149,27 @@ cardinal_clustering = sklearn.cluster.MeanShift(bandwidth=.05).fit(scaled_bounda
 boundaries = boundary_scaler.inverse_transform(cardinal_clustering.cluster_centers_)
 boundaries
 
-showImage(drawLines(image, boundaries))
+def eval_parametric(rho, theta, xs):
+    ys = -(np.array(xs)*np.cos(theta) - rho) / np.sin(theta)
+    return  np.array([list(pair) for pair in zip(xs, ys)]).reshape(-1,2)
+
+boundary_end_pts = [eval_parametric(boundary[0], boundary[1], [0, image.shape[1]]) for boundary in boundaries]
+
+boundary_end_pts
+
+segment_pairs = [(a,b) for (a,b) in
+                 itertools.combinations(boundary_end_pts, 2)
+                 if not (np.array_equal(a,b))]
+
+all_corners = [seg_intersect(a[0],a[1],b[0],b[1]) for (a,b) in segment_pairs]
+
+bounded_corners = [pt for pt in all_corners if np.all(pt >= np.array([0,0])) and np.all(pt < np.array([image.shape[1], image.shape[0]]))]
+
+out_image=image.copy()
+for pt in bounded_corners:
+    cv2.circle(out_image,(int(pt[0]),int(pt[1])),7,[255,0,0],thickness=7)
+
+showImage(out_image)
+#showImage(drawLines(image, boundaries))
 destroyWindowOnKey()
 
