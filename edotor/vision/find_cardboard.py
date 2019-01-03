@@ -46,7 +46,6 @@ def drawLines(in_img, lines, labels=[]):
     idx = -1
     for rho,theta in lines:
         idx += 1
-        label = labels[idx]
         a = np.cos(theta)
         b = np.sin(theta)
         x0 = a*rho
@@ -58,6 +57,7 @@ def drawLines(in_img, lines, labels=[]):
 
         color = [0,0,255]
         if len(labels) == len(lines):
+            label = labels[idx]
             off = 50*label
             color = [int((0+off)%255), int((100+2*off)%255), int((200+3*off)%255)]
 
@@ -92,43 +92,22 @@ if __name__ == '__main__':
 
 
 img_path = '/Users/dgopstein/dotfor/edotor/vision/button_imgs/20181216_150759.jpg'
-sat = loadScaledSat('/Users/dgopstein/dotfor/edotor/vision/button_imgs/20181216_150759.jpg')
-
-destroyWindowOnKey()
-showImage(sat)
 
 image = imutils.resize(cv2.imread(img_path), width=1000)
-
-# Display the original image
-#imshow("Original Image", image)
-#destroyWindowOnKey()
-
 hue, sat, val = hsv_img(image)
 val_sat = np.array((invert(sat)/255.0*val/255.0)*255, np.uint8)
-val_sat_thresh = cv2.threshold(val_sat,100,255,cv2.THRESH_BINARY)[1]
-showImage(val_sat)
-showImage(val_sat_thresh)
-destroyWindowOnKey()
-# black (low) sat
-# white (val) sat
-
 
 # RGB to Gray scale conversion
-#gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 gray=val_sat.copy()
-#imshow("1 - Grayscale Conversion", gray)
-#destroyWindowOnKey()
 
-# Noise removal with iterative bilateral filter(removes noise while preserving edges)
+# Noise removal with iterative bilateral filter
+# (removes noise while preserving edges)
 gray = cv2.bilateralFilter(gray, 11, 17, 17)
-#imshow("2 - Bilateral Filter", gray)
-#destroyWindowOnKey()
 
 # Find Edges of the grayscale image
 edged = cv2.Canny(gray, 170, 200)
-imshow("4 - Canny Edges", edged)
-destroyWindowOnKey()
 
+# Turn the observed edges into inferred lines
 lines = cv2.HoughLines(edged,rho=1,theta=np.pi/180,threshold=150)
 flat_lines = lines.reshape(lines.shape[0], lines.shape[2])
 
@@ -145,11 +124,15 @@ boundary_lines = np.array([line for (line, label) in zip(flat_lines, quad_cluste
 
 # make sure the angles and intercepts are comparable
 # (normally they have very different domains)
-scaled_boundaries = sklearn.preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1)).fit(boundary_lines).transform(boundary_lines)
+boundary_scaler = sklearn.preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
+scaled_boundaries = boundary_scaler.fit(boundary_lines).transform(boundary_lines)
 
 # we already have all the boundary lines
 # now determine which ones are for which edge
 cardinal_clustering = sklearn.cluster.MeanShift(bandwidth=.05).fit(scaled_boundaries)
-boundaries = cardinal_clustering.cluster_centers_
-showImage(drawLines(image, boundary_lines, labels=cardinal_clustering.labels_))
+boundaries = boundary_scaler.inverse_transform(cardinal_clustering.cluster_centers_)
+boundaries
+
+showImage(drawLines(image, boundaries))
 destroyWindowOnKey()
+
