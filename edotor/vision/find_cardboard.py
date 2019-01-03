@@ -3,6 +3,8 @@
 import numpy as np
 import cv2
 import imutils
+import sklearn
+import math
 
 # https://github.com/Aqsa-K/Car-Number-Plate-Detection-OpenCV-Python/blob/master/CarPlateDetection.py
 
@@ -39,22 +41,55 @@ def dilate_erode(img, kern = (2,2), iters=10):
 def blur(img):
     return cv2.GaussianBlur(img, (9, 9), 0)
 
-def drawLines(in_img, lines, top_n=-1):
+def drawLines(in_img, lines, labels=[]):
     img = in_img.copy()
-    for line in lines[0:top_n]:
-        for rho,theta in line:
-            a = np.cos(theta)
-            b = np.sin(theta)
-            x0 = a*rho
-            y0 = b*rho
-            x1 = int(x0 + 2000*(-b))
-            y1 = int(y0 + 2000*(a))
-            x2 = int(x0 - 2000*(-b))
-            y2 = int(y0 - 2000*(a))
-            print(((x1,y1),(x2,y2)))
+    idx = -1
+    for rho,theta in lines:
+        idx += 1
+        label = labels[idx]
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a*rho
+        y0 = b*rho
+        x1 = int(x0 + 2000*(-b))
+        y1 = int(y0 + 2000*(a))
+        x2 = int(x0 - 2000*(-b))
+        y2 = int(y0 - 2000*(a))
 
-            cv2.line(img,(x1,y1),(x2,y2),(0,0,255),2)
+        color = [0,0,255]
+        if len(labels) == len(lines):
+            off = 50*label
+            color = [int((0+off)%255), int((100+2*off)%255), int((200+3*off)%255)]
+
+        print("color: ", color)
+        cv2.line(img,(x1,y1),(x2,y2),color=color,thickness=2)
     return img
+
+
+###########################################################################
+# https://stackoverflow.com/questions/2992264/extracting-a-quadrilateral-image-to-a-rectangle
+###########################################################################
+
+def warpImage(image, corners, target):
+    mat = cv.CreateMat(3, 3, cv.CV_32F)
+    cv.GetPerspectiveTransform(corners, target, mat)
+    out = cv.CreateMat(height, width, cv.CV_8UC3)
+    cv.WarpPerspective(image, out, mat, cv.CV_INTER_CUBIC)
+    return out
+
+if __name__ == '__main__':
+    width, height = 400, 250
+    corners = [(171,72),(331,93),(333,188),(177,210)]
+    target = [(0,0),(width,0),(width,height),(0,height)]
+    image = cv.LoadImageM('fries.jpg')
+    out = warpImage(image, corners, target)
+    cv.SaveImage('fries_warped.jpg', out)
+
+###########################################################################
+
+
+
+
 
 img_path = '/Users/dgopstein/dotfor/edotor/vision/button_imgs/20181216_150759.jpg'
 sat = loadScaledSat('/Users/dgopstein/dotfor/edotor/vision/button_imgs/20181216_150759.jpg')
@@ -95,38 +130,26 @@ imshow("4 - Canny Edges", edged)
 destroyWindowOnKey()
 
 lines = cv2.HoughLines(edged,rho=1,theta=np.pi/180,threshold=150)
+flat_lines = lines.reshape(lines.shape[0], lines.shape[2])
 
-showImage(edged)
-showImage(drawLines(image, lines))
+# only look at theta (angle) and mod by the quadrant to search for
+# rectangular things. This works since parallel lines already have
+# the same angle, and perpendicular lines will have the same angle
+# once modded by 90 degrees (pi/2 radians)
+quad_angles = flat_lines[:,1].reshape(-1,1) % (math.pi/2)
+quad_clustering = sklearn.cluster.MeanShift(bandwidth=(math.pi/40)).fit(quad_angles)
 
-#kernel = np.ones((2,2),np.uint8)
-#dilated = cv2.dilate(edged,kernel,iterations = 30)
-#eroded = cv2.erode(dilated,kernel,iterations = 30)
-#imshow("dilate", eroded)
-dilated = edged
+# select the lines that form the best box
+# (assumes the 0th cluster is the strongest)
+boundary_lines = np.array([line for (line, label) in zip(flat_lines, quad_clustering.labels_) if label == 0])
 
-# Find contours based on Edges
-(new, cnts, _) = cv2.findContours(val_sat_thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-cnts=sorted(cnts, key = cv2.contourArea, reverse = True)[:30] #sort contours based on their area keeping minimum required area as '30' (anything smaller than this will not be considered)
-NumberPlateCnt = None #we currently have no Number plate contour
+# make sure the angles and intercepts are comparable
+# (normally they have very different domains)
+scaled_boundaries = sklearn.preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1)).fit(boundary_lines).transform(boundary_lines)
 
-# loop over our contours to find the best possible approximate contour of number plate
-allPolys = []
-for c in cnts:
-    #peri = cv2.arcLength(c, True)
-    approx = cv2.approxPolyDP(c, .001, False) #0.0002 * peri, True)
-    allPolys.append(approx)
-    if len(approx) == 4:  # Select the contour with 4 corners
-        NumberPlateCnt = approx #This is our approx Number Plate Contour
-        break
-
-contour_image = image.copy()
-cv2.drawContours(contour_image, allPolys, -1, (0,255,0), 3)
-
-# Drawing the selected contour on the original image
-#cv2.drawContours(image, [NumberPlateCnt], -1, (0,255,0), 3)
-imshow("Final Image With Number Plate Detected", contour_image)
-destroyWindowOnKey()
-
-showImage(img)
+# we already have all the boundary lines
+# now determine which ones are for which edge
+cardinal_clustering = sklearn.cluster.MeanShift(bandwidth=.05).fit(scaled_boundaries)
+boundaries = cardinal_clustering.cluster_centers_
+showImage(drawLines(image, boundary_lines, labels=cardinal_clustering.labels_))
 destroyWindowOnKey()
