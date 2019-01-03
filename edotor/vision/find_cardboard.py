@@ -6,6 +6,7 @@ import imutils
 import sklearn
 import math
 import itertools
+import scipy
 
 # https://github.com/Aqsa-K/Car-Number-Plate-Detection-OpenCV-Python/blob/master/CarPlateDetection.py
 
@@ -71,19 +72,11 @@ def drawLines(in_img, lines, labels=[]):
 ###########################################################################
 
 def warpImage(image, corners, target):
-    mat = cv.CreateMat(3, 3, cv.CV_32F)
-    cv.GetPerspectiveTransform(corners, target, mat)
-    out = cv.CreateMat(height, width, cv.CV_8UC3)
-    cv.WarpPerspective(image, out, mat, cv.CV_INTER_CUBIC)
+    mat = cv2.CreateMat(3, 3, cv2.CV_32F)
+    cv2.GetPerspectiveTransform(corners, target, mat)
+    out = cv2.CreateMat(height, width, cv2.CV_8UC3)
+    cv2.WarpPerspective(image, out, mat, cv2.CV_INTER_CUBIC)
     return out
-
-if __name__ == '__main__':
-    width, height = 400, 250
-    corners = [(171,72),(331,93),(333,188),(177,210)]
-    target = [(0,0),(width,0),(width,height),(0,height)]
-    image = cv.LoadImageM('fries.jpg')
-    out = warpImage(image, corners, target)
-    cv.SaveImage('fries_warped.jpg', out)
 
 ###########################################################################
 
@@ -108,68 +101,96 @@ def seg_intersect(a1,a2, b1,b2) :
 ###########################################################################
 
 img_path = '/Users/dgopstein/dotfor/edotor/vision/button_imgs/20181216_150759.jpg'
+#img_path = '/Users/dgopstein/dotfor/edotor/vision/button_imgs/20181216_150752.jpg'
 
 image = imutils.resize(cv2.imread(img_path), width=1000)
-hue, sat, val = hsv_img(image)
-val_sat = np.array((invert(sat)/255.0*val/255.0)*255, np.uint8)
 
-# RGB to Gray scale conversion
-gray=val_sat.copy()
+def card_corners(image):
+    hue, sat, val = hsv_img(image)
+    val_sat = np.array((invert(sat)/255.0*val/255.0)*255, np.uint8)
 
-# Noise removal with iterative bilateral filter
-# (removes noise while preserving edges)
-gray = cv2.bilateralFilter(gray, 11, 17, 17)
+    # RGB to Gray scale conversion
+    gray=val_sat.copy()
+    showImage(gray)
 
-# Find Edges of the grayscale image
-edged = cv2.Canny(gray, 170, 200)
+    # Noise removal with iterative bilateral filter
+    # (removes noise while preserving edges)
+    gray = cv2.bilateralFilter(gray, 11, 17, 17)
 
-# Turn the observed edges into inferred lines
-lines = cv2.HoughLines(edged,rho=1,theta=np.pi/180,threshold=150)
-flat_lines = lines.reshape(lines.shape[0], lines.shape[2])
+    # Find Edges of the grayscale image
+    edged = cv2.Canny(gray, 170, 200)
 
-# only look at theta (angle) and mod by the quadrant to search for
-# rectangular things. This works since parallel lines already have
-# the same angle, and perpendicular lines will have the same angle
-# once modded by 90 degrees (pi/2 radians)
-quad_angles = flat_lines[:,1].reshape(-1,1) % (math.pi/2)
-quad_clustering = sklearn.cluster.MeanShift(bandwidth=(math.pi/40)).fit(quad_angles)
+    # Turn the observed edges into inferred lines
+    lines = cv2.HoughLines(edged,rho=1,theta=np.pi/180,threshold=150)
+    flat_lines = lines.reshape(lines.shape[0], lines.shape[2])
 
-# select the lines that form the best box
-# (assumes the 0th cluster is the strongest)
-boundary_lines = np.array([line for (line, label) in zip(flat_lines, quad_clustering.labels_) if label == 0])
+    # only look at theta (angle) and mod by the quadrant to search for
+    # rectangular things. This works since parallel lines already have
+    # the same angle, and perpendicular lines will have the same angle
+    # once modded by 90 degrees (pi/2 radians)
+    quad_angles = flat_lines[:,1].reshape(-1,1) % (math.pi/2)
+    quad_clustering = sklearn.cluster.MeanShift(bandwidth=(math.pi/40)).fit(quad_angles)
 
-# make sure the angles and intercepts are comparable
-# (normally they have very different domains)
-boundary_scaler = sklearn.preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
-scaled_boundaries = boundary_scaler.fit(boundary_lines).transform(boundary_lines)
+    # select the lines that form the best box
+    # (assumes the 0th cluster is the strongest)
+    boundary_lines = np.array([line for (line, label) in zip(flat_lines, quad_clustering.labels_) if label == 0])
 
-# we already have all the boundary lines
-# now determine which ones are for which edge
-cardinal_clustering = sklearn.cluster.MeanShift(bandwidth=.05).fit(scaled_boundaries)
-boundaries = boundary_scaler.inverse_transform(cardinal_clustering.cluster_centers_)
-boundaries
+    # make sure the angles and intercepts are comparable
+    # (normally they have very different domains)
+    boundary_scaler = sklearn.preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
+    scaled_boundaries = boundary_scaler.fit(boundary_lines).transform(boundary_lines)
 
-def eval_parametric(rho, theta, xs):
-    ys = -(np.array(xs)*np.cos(theta) - rho) / np.sin(theta)
-    return  np.array([list(pair) for pair in zip(xs, ys)]).reshape(-1,2)
+    # we already have all the boundary lines
+    # now determine which ones are for which edge
+    cardinal_clustering = sklearn.cluster.MeanShift(bandwidth=.05).fit(scaled_boundaries)
+    boundaries = boundary_scaler.inverse_transform(cardinal_clustering.cluster_centers_)
+    boundaries
 
-boundary_end_pts = [eval_parametric(boundary[0], boundary[1], [0, image.shape[1]]) for boundary in boundaries]
+    def eval_parametric(rho, theta, xs):
+        ys = -(np.array(xs)*np.cos(theta) - rho) / np.sin(theta)
+        return  np.array([list(pair) for pair in zip(xs, ys)]).reshape(-1,2)
 
-boundary_end_pts
+    boundary_end_pts = [eval_parametric(boundary[0], boundary[1], [0, image.shape[1]]) for boundary in boundaries]
 
-segment_pairs = [(a,b) for (a,b) in
-                 itertools.combinations(boundary_end_pts, 2)
-                 if not (np.array_equal(a,b))]
+    boundary_end_pts
 
-all_corners = [seg_intersect(a[0],a[1],b[0],b[1]) for (a,b) in segment_pairs]
+    segment_pairs = [(a,b) for (a,b) in
+                    itertools.combinations(boundary_end_pts, 2)
+                    if not (np.array_equal(a,b))]
 
-bounded_corners = [pt for pt in all_corners if np.all(pt >= np.array([0,0])) and np.all(pt < np.array([image.shape[1], image.shape[0]]))]
+    all_corners = [seg_intersect(a[0],a[1],b[0],b[1]) for (a,b) in segment_pairs]
 
-out_image=image.copy()
-for pt in bounded_corners:
-    cv2.circle(out_image,(int(pt[0]),int(pt[1])),7,[255,0,0],thickness=7)
+    bounded_corners = [pt for pt in all_corners if np.all(pt >= np.array([0,0])) and np.all(pt < np.array([image.shape[1], image.shape[0]]))]
 
-showImage(out_image)
-#showImage(drawLines(image, boundaries))
+    #out_image=image.copy()
+    #for pt in bounded_corners:
+    #    cv2.circle(out_image,(int(pt[0]),int(pt[1])),7,[255,0,0],thickness=7)
+
+    #showImage(out_image)
+    #showImage(drawLines(image, boundaries))
+    #destroyWindowOnKey()
+
+    return np.array(bounded_corners).reshape(-1,2)
+
+corners = card_corners(image)
+
+corners
+
+width, height = 660, 250
+#width, height = 990, 325
+target = [(0,0),(width,0),(width,height),(0,height)]
+
+
+C = scipy.spatial.distance.cdist(corners, target)
+_, assignment = scipy.optimize.linear_sum_assignment(C)
+ordered_target = [target[i] for i in assignment]
+
+
+M = cv2.getPerspectiveTransform(np.float32(corners), np.float32(ordered_target))
+out = cv2.warpPerspective(image.copy(),M,(width,height))
+
+showImage(image)
+showImage(out)
 destroyWindowOnKey()
 
+out
