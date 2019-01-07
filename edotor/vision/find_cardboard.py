@@ -116,9 +116,10 @@ def homographize(corners):
     target = [(0,0),(width,0),(width,height),(0,height)]
 
 
-    C = scipy.spatial.distance.cdist(corners, target)
-    _, assignment = scipy.optimize.linear_sum_assignment(C)
-    ordered_target = [target[i] for i in assignment]
+    #C = scipy.spatial.distance.cdist(corners, target)
+    #_, assignment = scipy.optimize.linear_sum_assignment(C)
+    #ordered_target = [target[i] for i in assignment]
+    ordered_target=target
 
 
     M = cv2.getPerspectiveTransform(np.float32(corners), np.float32(ordered_target))

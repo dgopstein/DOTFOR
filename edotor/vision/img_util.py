@@ -99,3 +99,11 @@ def seg_intersect(a1,a2, b1,b2) :
     num = np.dot( dap, dp )
     return (num / denom.astype(float))*db + b1
 ###########################################################################
+
+def loadCardRegions():
+    csv_dict = pd.read_csv("button_imgs.csv").T.to_dict()
+
+    for k in csv_dict:
+        csv_dict[k]['file'] = "button_imgs/"+csv_dict[k]['file'] + '.jpg'
+
+    return [csv_dict[v] for v in csv_dict]

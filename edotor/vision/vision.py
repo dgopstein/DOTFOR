@@ -46,8 +46,8 @@ def findCircles(sat):
     print("finished detecting circles: ", len(circles))
     return circles
 
-def displayCircles(circles):
-    output = sat.copy()
+def displayCircles(image, circles):
+    output = image.copy()
 
     # loop over the (x, y) coordinates and radius of the circles
     for (x, y, r) in circles:
@@ -56,8 +56,7 @@ def displayCircles(circles):
         cv2.circle(output, (x, y), r, (0, 5, 0), 4)
         cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
 
-    showImage(np.hstack([sat, output]))
-    print("closed window")
+    showImage(np.hstack([output, image]))
 
 def hist(np_data, bins=20):
     hist = pd.DataFrame(np_data).plot.hist(grid=True, bins=bins, rwidth=0.9, color='#607c8e')
@@ -134,9 +133,9 @@ def findBestScaleForCard(sat_match):
 
 sat = loadScaledSat('/Users/dgopstein/dotfor/edotor/vision/button_imgs/20181216_150759.jpg')
 sat_match = sat.copy()
-best_res, best_pt, best_shape = findBestScaleForCard(sat_match)
-cv2.rectangle(sat_match, best_pt, (best_pt[0]+int(best_scale*tmpl_w),
-                                   best_pt[1]+int(best_scale*tmpl_h)), (0,0,255), 2)
+#best_res, best_pt, best_shape = findBestScaleForCard(sat_match)
+#cv2.rectangle(sat_match, best_pt, (best_pt[0]+int(best_scale*tmpl_w),
+#                                   best_pt[1]+int(best_scale*tmpl_h)), (0,0,255), 2)
 destroyWindowOnKey()
 showImage(sat_match)
 
@@ -145,6 +144,8 @@ sat_circles = findCircles(sat)
 
 radiiMode(sat_circles)
 angleMode(sat_circles)
+
+displayCircles(sat, sat_circles)
 
 # Angles
 #        90
