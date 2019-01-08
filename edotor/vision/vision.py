@@ -54,7 +54,8 @@ def displayCircles(image, circles):
         # draw the circle in the output image, then draw a rectangle
         # corresponding to the center of the circle
         cv2.circle(output, (x, y), r, (0, 5, 0), 4)
-        cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+        rect_size = 2
+        cv2.rectangle(output, (x - rect_size, y - rect_size), (x + rect_size, y + rect_size), (0, 128, 255), -1)
 
     showImage(np.hstack([output, image]))
 

@@ -63,7 +63,7 @@ def drawLines(in_img, lines, labels=[]):
             off = 50*label
             color = [int((0+off)%255), int((100+2*off)%255), int((200+3*off)%255)]
 
-        cv2.line(img,(x1,y1),(x2,y2),color=color,thickness=2)
+        cv2.line(img,(x1,y1),(x2,y2),color=color,thickness=1)
     return img
 
 
