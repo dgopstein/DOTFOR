@@ -62,7 +62,16 @@ destroyWindowOnKey()
 circle_bin = circleBinImage(sized_cs)
 showImage(circle_bin)
 
-lines = cv2.HoughLines(circle_bin,1,np.pi/180,9)
-showImage(drawLines(image, lines.reshape(-1, 2)))
+lines = cv2.HoughLines(circle_bin,1,np.pi/180,9).reshape(-1, 2)
+showImage(drawLines(image, lines))
+
+line_angle_clusters = MeanShift(bandwidth=0.02).fit(lines[:,1].reshape(-1,1) % (math.pi/2))
+
+cardinal_lines = lines_with_label_in(lines, line_angle_clusters.labels_, [0])
+
+clustered_lines = cluster_2d(cardinal_lines, 0.02)
+
+showImage(drawLines(image, clustered_lines))
+
 print(lines)
 print('done')

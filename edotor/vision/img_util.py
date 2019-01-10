@@ -107,3 +107,11 @@ def loadCardRegions():
         csv_dict[k]['file'] = "button_imgs/"+csv_dict[k]['file'] + '.jpg'
 
     return [csv_dict[v] for v in csv_dict]
+
+def cluster_2d(lines, bw=0.05):
+    line_scaler = sklearn.preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
+    scaled_lines = line_scaler.fit(lines).transform(lines)
+
+    clustered_lines_trans = MeanShift(bandwidth=bw).fit(scaled_lines)
+    clustered_lines = line_scaler.inverse_transform(clustered_lines_trans.cluster_centers_)
+    return clustered_lines
