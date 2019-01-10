@@ -36,26 +36,37 @@ def dilate_erode(img, kern = (2,2), iters=10):
 def blur(img):
     return cv2.GaussianBlur(img, (9, 9), 0)
 
-def drawPoints(in_img, points):
+def drawPoints(in_img, points, colors=[]):
     out_image=in_img.copy()
+    i = -1
     for pt in points:
-        cv2.circle(out_image,(int(pt[0]),int(pt[1])),7,[255,0,0],thickness=7)
+        i += 1
+        color = [255, 0, 0]
+        if len(colors) == len(points):
+            color = colors[i]
+
+        cv2.circle(out_image,(int(pt[0]),int(pt[1])),7,color,thickness=7)
 
     return out_image
+
+def polar2seg(rho, theta):
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a*rho
+    y0 = b*rho
+    x1 = int(x0 + 2000*(-b))
+    y1 = int(y0 + 2000*(a))
+    x2 = int(x0 - 2000*(-b))
+    y2 = int(y0 - 2000*(a))
+
+    return [np.array([x1, y1]), np.array([x2, y2])]
 
 def drawLines(in_img, lines, labels=[]):
     img = in_img.copy()
     idx = -1
     for rho,theta in lines:
         idx += 1
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a*rho
-        y0 = b*rho
-        x1 = int(x0 + 2000*(-b))
-        y1 = int(y0 + 2000*(a))
-        x2 = int(x0 - 2000*(-b))
-        y2 = int(y0 - 2000*(a))
+        (x1, y1), (x2, y2) = polar2seg(rho, theta)
 
         color = [0,0,255]
         if len(labels) == len(lines):
@@ -108,6 +119,9 @@ def loadCardRegions():
 
     return [csv_dict[v] for v in csv_dict]
 
+def cluster_1d(lines, bw=0.02):
+    return MeanShift(bandwidth=bw).fit(lines.reshape(-1,1))
+
 def cluster_2d(lines, bw=0.05):
     line_scaler = sklearn.preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
     scaled_lines = line_scaler.fit(lines).transform(lines)
@@ -115,3 +129,14 @@ def cluster_2d(lines, bw=0.05):
     clustered_lines_trans = MeanShift(bandwidth=bw).fit(scaled_lines)
     clustered_lines = line_scaler.inverse_transform(clustered_lines_trans.cluster_centers_)
     return clustered_lines
+
+# Find assign one group of points to another
+def correspondence(domain, target):
+    C = scipy.spatial.distance.cdist(domain, target)
+    _, assignment = scipy.optimize.linear_sum_assignment(C)
+    ordered_target = [target[i] for i in assignment]
+    return ordered_target
+
+# https://stackoverflow.com/questions/18152445/get-the-values-in-a-given-radius-from-numpy-array
+def n_closest(x,n,d=1):
+    return x[n[0]-d:n[0]+d+1,n[1]-d:n[1]+d+1]

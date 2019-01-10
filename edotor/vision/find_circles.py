@@ -24,9 +24,9 @@ orig_image = loadImage(card_regions[16]['file'])
 image = imutils.resize(orig_image, width=400)
 height, width, depth = image.shape
 
-hue, sat_orig, val = hsv_img(image)
+blurred = cv2.blur(image,(3,3),0)
 
-sat = cv2.blur(sat_orig,(3,3),0)
+hue, sat, val = hsv_img(blurred)
 
 hough_circles = cv2.HoughCircles(sat, cv2.HOUGH_GRADIENT, .5, 10,
                                     param1=10,
@@ -62,16 +62,40 @@ destroyWindowOnKey()
 circle_bin = circleBinImage(sized_cs)
 showImage(circle_bin)
 
-lines = cv2.HoughLines(circle_bin,1,np.pi/180,9).reshape(-1, 2)
+lines = cv2.HoughLines(circle_bin,1,np.pi/180,7).reshape(-1, 2)
 showImage(drawLines(image, lines))
 
-line_angle_clusters = MeanShift(bandwidth=0.02).fit(lines[:,1].reshape(-1,1) % (math.pi/2))
+line_angle_clusters = cluster_1d(lines[:,1] % (math.pi/2), bw=0.05)
 
 cardinal_lines = lines_with_label_in(lines, line_angle_clusters.labels_, [0])
+showImage(drawLines(image, cardinal_lines))
 
 clustered_lines = cluster_2d(cardinal_lines, 0.02)
+showImage(drawLines(image, clustered_lines))
+
+line_angle_clusters2 = cluster_1d(clustered_lines[:,1], 0.02)
+clean_cardinal_lines = lines_with_label_in(clustered_lines, line_angle_clusters2.labels_, [0])
+clean_cardinal_lines = lines_with_label_in(clustered_lines, line_angle_clusters2.labels_, [1])
+showImage(drawLines(image, clean_cardinal_lines))
+
+line_angle_clusters2 = cluster_1d(clustered_lines[:,1], 0.1)
+a_lines = lines_with_label_in(clustered_lines, line_angle_clusters2.labels_, [0])
+b_lines = lines_with_label_in(clustered_lines, line_angle_clusters2.labels_, [1])
+a_lines.sort(0)
+b_lines.sort(0)
+
+line_pairs = list(itertools.product(a_lines, b_lines))
+intersections = [seg_intersect(*polar2seg(*a), *polar2seg(*b))for (a, b) in line_pairs]
+
+intersection_splotches_r = [n_closest(image[:,:,0], inter.astype(np.uint8), d=2) for inter in intersections]
+([np.mean(splotch) for splotch in intersection_splotches_r])
+
+
+showImage(n_closest(image, intersections[20].astype(np.uint8), d=1))
+
 
 showImage(drawLines(image, clustered_lines))
+showImage(drawPoints(image, intersections))
 
 print(lines)
 print('done')
