@@ -133,10 +133,36 @@ def cluster_2d(lines, bw=0.05):
 # Find assign one group of points to another
 def correspondence(domain, target):
     C = scipy.spatial.distance.cdist(domain, target)
-    _, assignment = scipy.optimize.linear_sum_assignment(C)
-    ordered_target = [target[i] for i in assignment]
+    rows, cols = scipy.optimize.linear_sum_assignment(C)
+    ordered_target = [(domain[r], target[c]) for (r, c) in zip(rows, cols)]
     return ordered_target
 
 # https://stackoverflow.com/questions/18152445/get-the-values-in-a-given-radius-from-numpy-array
 def n_closest(x,n,d=1):
     return x[n[0]-d:n[0]+d+1,n[1]-d:n[1]+d+1]
+
+def displayCircles(image, circles, ring=True):
+    output = image.copy()
+
+    # loop over the (x, y) coordinates and radius of the circles
+    for circle in circles:
+        x, y = circle[0:2]
+        r = 5
+        if len(circle) == 3:
+            r = circle[2]
+
+        # draw the circle in the output image, then draw a rectangle
+        # corresponding to the center of the circle
+        if ring:
+            cv2.circle(output, (x, y), r, (0, 5, 0), 4)
+        rect_size = 2
+        cv2.rectangle(output, (x - rect_size, y - rect_size), (x + rect_size, y + rect_size), (0, 128, 255), -1)
+
+    showImage(output)
+    #showImage(np.hstack([output, image]))
+
+def rotation2d(theta):
+    #theta = np.radians(degrees)
+    c, s = np.cos(theta), np.sin(theta)
+    R = np.array(((c,-s), (s, c)))
+    return R

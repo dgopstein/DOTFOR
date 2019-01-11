@@ -46,19 +46,6 @@ def findCircles(sat):
     print("finished detecting circles: ", len(circles))
     return circles
 
-def displayCircles(image, circles):
-    output = image.copy()
-
-    # loop over the (x, y) coordinates and radius of the circles
-    for (x, y, r) in circles:
-        # draw the circle in the output image, then draw a rectangle
-        # corresponding to the center of the circle
-        cv2.circle(output, (x, y), r, (0, 5, 0), 4)
-        rect_size = 2
-        cv2.rectangle(output, (x - rect_size, y - rect_size), (x + rect_size, y + rect_size), (0, 128, 255), -1)
-
-    showImage(np.hstack([output, image]))
-
 def hist(np_data, bins=20):
     hist = pd.DataFrame(np_data).plot.hist(grid=True, bins=bins, rwidth=0.9, color='#607c8e')
     hist.plot()

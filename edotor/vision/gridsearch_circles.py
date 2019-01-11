@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from collections import Counter
 from sklearn.cluster import KMeans
 from sklearn.neighbors import KernelDensity
+from sklearn.metrics import mean_squared_error
 import scipy
 import scipy.signal
 import math
@@ -51,7 +52,7 @@ def circleBinImage(circles):
         cv2.circle(bw,(c[0],c[1]),1,255,thickness=cv2.FILLED)
     return bw
 
-angleMode(circles)
+angle_mode = angleMode(circles)
 
 sized_cs = circles[np.where(np.logical_and(circles[:,2]>=.8*radius_mode, circles[:,2]<=1.2*radius_mode))]
 
@@ -61,43 +62,40 @@ displayCircles(sat, circles)
 displayCircles(sat, sized_cs)
 destroyWindowOnKey()
 
-circle_bin = circleBinImage(sized_cs)
-showImage(circle_bin)
-
-lines = cv2.HoughLines(circle_bin,1,np.pi/180,7).reshape(-1, 2)
-showImage(drawLines(image, lines))
-
-line_angle_clusters = cluster_1d(lines[:,1] % (math.pi/2), bw=0.05)
-
-cardinal_lines = lines_with_label_in(lines, line_angle_clusters.labels_, [0])
-showImage(drawLines(image, cardinal_lines))
-
-clustered_lines = cluster_2d(cardinal_lines, 0.02)
-showImage(drawLines(image, clustered_lines))
-
-line_angle_clusters2 = cluster_1d(clustered_lines[:,1], 0.02)
-clean_cardinal_lines = lines_with_label_in(clustered_lines, line_angle_clusters2.labels_, [0])
-clean_cardinal_lines = lines_with_label_in(clustered_lines, line_angle_clusters2.labels_, [1])
-showImage(drawLines(image, clean_cardinal_lines))
-
-line_angle_clusters2 = cluster_1d(clustered_lines[:,1], 0.1)
-a_lines = lines_with_label_in(clustered_lines, line_angle_clusters2.labels_, [0])
-b_lines = lines_with_label_in(clustered_lines, line_angle_clusters2.labels_, [1])
-a_lines.sort(0)
-b_lines.sort(0)
-
-line_pairs = list(itertools.product(a_lines, b_lines))
-intersections = [seg_intersect(*polar2seg(*a), *polar2seg(*b))for (a, b) in line_pairs]
-
-intersection_splotches_r = [n_closest(image[:,:,0], inter.astype(np.uint8), d=2) for inter in intersections]
-([np.mean(splotch) for splotch in intersection_splotches_r])
+def buttonPos(col, row, radius):
+    x = (col + int(col/3)) * 2*radius
+    y = row * 2*radius
+    return np.array([x, y], np.uint32)
 
 
-showImage(n_closest(image, intersections[20].astype(np.uint8), d=1))
+affine_mat = np.array([[1, 2, 5], [4, 5, 10]])
+
+affine_mat.shape
 
 
-showImage(drawLines(image, clustered_lines))
-showImage(drawPoints(image, intersections))
+def grid_dist(affine_mat):
+    print(affine_mat)
+    transformed_grid = transform_grid(affine_mat)
+    #displayCircles(image, transformed_grid.astype(np.uint32), ring=False)
 
-print(lines)
-print('done')
+    nearest_points = np.array(correspondence(transformed_grid, sized_cs[:,0:2]))
+    a, b = nearest_points.T
+    return mean_squared_error(a, b)
+
+def transform_grid(affine_mat):
+    basic_grid = np.array([buttonPos(col, row, radius_mode) for col in list(range(0, 12)) for row in range(0, 6)])
+
+    transformed_grid = np.inner(np.hstack([basic_grid, np.ones([72, 1])]), np.vstack([affine_mat.reshape(2,3), [[0, 0, 1]]]))[:,0:2]
+    return transformed_grid
+
+affine_mat = np.array(([ 1.49921004e+00,  1.05000499e+01, -9.74989342e-05,  1.49921074e+00, 1.05000532e+01, -1.54044361e-04]))
+np.inner(np.hstack([basic_grid, np.ones([72, 1])]), np.vstack([affine_mat.reshape(2,3), [[0, 0, 1]]]))[:,0:2]
+
+scipy.optimize.minimize(grid_dist, affine_mat)
+displayCircles(image, transform_grid(affine_mat).astype(np.uint32), ring=False)
+
+grid_dist(affine_mat)
+
+
+
+displayCircles(image, np.inner(np.hstack([basic_grid, np.ones([72, 1])]), [[1, 2, 30], [2, 1, 60], [0, 0, 1]]).astype(np.uint32), ring=False)
