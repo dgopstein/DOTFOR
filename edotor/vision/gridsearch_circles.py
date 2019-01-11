@@ -54,7 +54,7 @@ def circleBinImage(circles):
 
 angle_mode = angleMode(circles)
 
-sized_cs = circles[np.where(np.logical_and(circles[:,2]>=.8*radius_mode, circles[:,2]<=1.2*radius_mode))]
+sized_cs = circles[np.where(np.logical_and(circles[:,2]>=.7*radius_mode, circles[:,2]<=1.3*radius_mode))]
 
 len(circles)
 len(sized_cs)
@@ -67,35 +67,32 @@ def buttonPos(col, row, radius):
     y = row * 2*radius
     return np.array([x, y], np.uint32)
 
-
-affine_mat = np.array([[1, 2, 5], [4, 5, 10]])
-
-affine_mat.shape
-
-
-def grid_dist(affine_mat):
-    print(affine_mat)
-    transformed_grid = transform_grid(affine_mat)
+def grid_dist(scale_xoff_yoff):
+    print(scale_xoff_yoff)
+    transformed_grid = transform_grid(*scale_xoff_yoff)
     #displayCircles(image, transformed_grid.astype(np.uint32), ring=False)
 
     nearest_points = np.array(correspondence(transformed_grid, sized_cs[:,0:2]))
-    a, b = nearest_points.T
-    return mean_squared_error(a, b)
+    a, b = zip(*nearest_points)
+    return math.sqrt(mean_squared_error(a, b))
 
-def transform_grid(affine_mat):
+def transform_grid(scale, xoff, yoff):
     basic_grid = np.array([buttonPos(col, row, radius_mode) for col in list(range(0, 12)) for row in range(0, 6)])
 
-    transformed_grid = np.inner(np.hstack([basic_grid, np.ones([72, 1])]), np.vstack([affine_mat.reshape(2,3), [[0, 0, 1]]]))[:,0:2]
+    rot_grid = np.inner(basic_grid, rotation2d(0))
+
+    transformed_grid = rot_grid * scale + [xoff, yoff]
     return transformed_grid
 
-affine_mat = np.array(([ 1.49921004e+00,  1.05000499e+01, -9.74989342e-05,  1.49921074e+00, 1.05000532e+01, -1.54044361e-04]))
-np.inner(np.hstack([basic_grid, np.ones([72, 1])]), np.vstack([affine_mat.reshape(2,3), [[0, 0, 1]]]))[:,0:2]
 
-scipy.optimize.minimize(grid_dist, affine_mat)
+
+min_x, min_y, min_radius = np.amin(sized_cs, 0)
+
+(min_x, min_y)
+scipy.optimize.minimize(grid_dist, [0, min_x, min_y])
 displayCircles(image, transform_grid(affine_mat).astype(np.uint32), ring=False)
 
-grid_dist(affine_mat)
 
-
-
-displayCircles(image, np.inner(np.hstack([basic_grid, np.ones([72, 1])]), [[1, 2, 30], [2, 1, 60], [0, 0, 1]]).astype(np.uint32), ring=False)
+grid_dist([-.04, 1.65, min_x, min_y])
+displayCircles(image, sized_cs)
+displayCircles(image, transform_grid( 12.04206595,   1.88847251,  92.13644901, 126.09508901).astype(np.int), ring=False)
