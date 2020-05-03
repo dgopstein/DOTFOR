@@ -45,8 +45,9 @@ function prevCard() {
 }
 
 function addCard() {
+  newCardIdx = currentCardIdx()+1
   currentCard = newCard()
-  deck.push(currentCard)
+  deck.splice(newCardIdx, 0, currentCard)
   update()
 }
 
@@ -54,7 +55,7 @@ function removeCard() {
   if (deck.length > 1) {
     const oldIdx = currentCardIdx()
     deck = _.pull(deck, currentCard)
-    currentCard = deck[_.min([oldIdx, deck.length])]
+    currentCard = deck[_.min([oldIdx, deck.length-1])]
     update()
   }
 }
